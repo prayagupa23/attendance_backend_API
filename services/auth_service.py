@@ -10,7 +10,7 @@ def login_service(data):
     cur = conn.cursor()
 
     cur.execute("""
-        SELECT student_id, password_hash, name, roll_number
+        SELECT student_id, password_hash, name, email, phone, date_of_birth, address, department, year, roll_number, sgpa, lab_batch
         FROM students
         WHERE roll_number = %s
     """, (roll_number,))
@@ -23,7 +23,7 @@ def login_service(data):
     if not user:
         return {"error": "Invalid roll number"}, 404
 
-    db_student_id, db_password, name, db_roll = user
+    db_student_id, db_password, name, email, phone, date_of_birth, address, department, year, db_roll, sgpa, lab_batch = user
 
     if password != db_password:
         return {"error": "Invalid password"}, 401
@@ -31,8 +31,16 @@ def login_service(data):
     return {
         "message": "Login successful",
         "student_id": db_student_id,
+        "name": name,
+        "email": email,
+        "phone": phone,
+        "date_of_birth": str(date_of_birth) if date_of_birth else None,
+        "address": address,
+        "department": department,
+        "year": year,
         "roll_number": db_roll,
-        "name": name
+        "sgpa": float(sgpa) if sgpa else None,
+        "lab_batch": lab_batch
     }, 200
 
 def faculty_login_service(data):
