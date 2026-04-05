@@ -98,3 +98,59 @@ def get_assigned_courses_service(faculty_id):
 
     except Exception as e:
         return {"error": str(e)}, 500
+
+
+def get_full_timetable_service(faculty_id):
+    if not faculty_id:
+        return {"error": "faculty_id parameter is required"}, 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Query to get full timetable for faculty with proper ordering
+        cur.execute("""
+            SELECT 
+                timetable_id, 
+                course_code, 
+                course_name, 
+                batch, 
+                day_of_week, 
+                start_time::TEXT,  -- Casting to TEXT for easier Flutter parsing
+                end_time::TEXT, 
+                room_number, 
+                session_type, 
+                lab_batch
+            FROM timetable 
+            WHERE faculty_id = %s
+            ORDER BY 
+                CASE day_of_week 
+                    WHEN 'MON' THEN 1 WHEN 'TUE' THEN 2 WHEN 'WED' THEN 3 
+                    WHEN 'THU' THEN 4 WHEN 'FRI' THEN 5 
+                END, 
+                start_time
+        """, (faculty_id,))
+
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        result = []
+        for r in rows:
+            result.append({
+                "timetable_id": r[0],
+                "course_code": r[1],
+                "course_name": r[2],
+                "batch": r[3],
+                "day_of_week": r[4],
+                "start_time": r[5],
+                "end_time": r[6],
+                "room_number": r[7],
+                "session_type": r[8],
+                "lab_batch": r[9]
+            })
+
+        return result, 200
+
+    except Exception as e:
+        return {"error": str(e)}, 500
