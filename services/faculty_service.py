@@ -154,3 +154,33 @@ def get_full_timetable_service(faculty_id):
 
     except Exception as e:
         return {"error": str(e)}, 500
+
+
+def get_batch_faculty_service(batch):
+    if not batch:
+        return {"error": "batch parameter is required"}, 400
+
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Query to get distinct faculty IDs for the given batch
+        cur.execute("""
+            SELECT DISTINCT faculty_id
+            FROM timetable
+            WHERE batch = %s
+        """, (batch,))
+
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        # Extract faculty IDs from result
+        faculty_list = [row[0] for row in rows]
+
+        return {
+            f"{batch} faculty": faculty_list
+        }, 200
+
+    except Exception as e:
+        return {"error": str(e)}, 500
