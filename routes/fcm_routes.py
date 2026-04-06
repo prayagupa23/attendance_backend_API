@@ -14,12 +14,14 @@ def save_token():
     cur = conn.cursor()
 
     cur.execute("""
-        INSERT INTO fcm_tokens (faculty_id, token)
-        VALUES (%s, %s)
-        ON CONFLICT (faculty_id)
-        DO UPDATE SET token = EXCLUDED.token,
-                      updated_at = CURRENT_TIMESTAMP
-    """, (faculty_id, token))
+        INSERT INTO fcm_tokens (faculty_id, faculty_name, token)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (token)
+        DO UPDATE SET 
+            faculty_id = EXCLUDED.faculty_id,
+            faculty_name = EXCLUDED.faculty_name,
+            updated_at = CURRENT_TIMESTAMP
+    """, (faculty_id, faculty_name, token))
 
     conn.commit()
     cur.close()
