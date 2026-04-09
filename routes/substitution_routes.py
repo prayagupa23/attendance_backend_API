@@ -271,3 +271,70 @@ def get_accepted_lectures():
     conn.close()
     
     return jsonify({"accepted_lectures": accepted_lectures})
+
+@substitution_bp.route('/substitution/notifications', methods=['GET'])
+def get_substitution_notifications():
+    """Get substitution notifications for students in a specific batch"""
+    batch = request.args.get('batch')
+    
+    if not batch:
+        return jsonify({"error": "batch parameter is required"}), 400
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+    
+    try:
+        cur.execute("""
+            SELECT 
+                ls.id,
+                ls.original_faculty_id,
+                ls.original_faculty_name,
+                ls.substitute_faculty_id,
+                ls.substitute_faculty_name,
+                ls.date,
+                ls.created_at,
+                t.course_name,
+                t.start_time,
+                t.end_time,
+                t.room_number,
+                t.batch
+            FROM lecture_substitutions ls
+            JOIN timetable t ON ls.timetable_id = t.timetable_id
+            WHERE ls.status = 'ACCEPTED'
+            AND t.batch = %s
+            AND ls.date >= CURRENT_DATE - INTERVAL '7 days'
+            ORDER BY ls.date DESC, t.start_time DESC
+        """, (batch,))
+        
+        notifications = []
+        for row in cur.fetchall():
+            notifications.append({
+                'id': row[0],
+                'original_faculty_id': row[1],
+                'original_faculty_name': row[2],
+                'substitute_faculty_id': row[3],
+                'substitute_faculty_name': row[4],
+                'date': str(row[5]),
+                'created_at': str(row[6]),
+                'course_name': row[7],
+                'start_time': str(row[8]),
+                'end_time': str(row[9]),
+                'room_no': row[10],
+                'batch': row[11]
+            })
+        
+        cur.close()
+        conn.close()
+        
+        print(f"DEBUG: Retrieved {len(notifications)} substitution notifications for batch {batch}")
+        
+        return jsonify({
+            "substitution_notifications": notifications,
+            "message": f"Successfully retrieved {len(notifications)} notifications"
+        })
+        
+    except Exception as e:
+        print(f"ERROR: Failed to get substitution notifications for batch {batch}: {str(e)}")
+        cur.close()
+        conn.close()
+        return jsonify({"error": "Internal server error"}), 500
