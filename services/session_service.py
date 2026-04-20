@@ -16,7 +16,7 @@ def create_session_service(data):
         # Insert session (UUID auto-generated)
         cur.execute("""
             INSERT INTO sessions (course_code, faculty_id, start_time, end_time, status)
-            VALUES (%s, %s, NOW(), NOW() + INTERVAL '10 minutes', 'ACTIVE')
+            VALUES (%s, %s, NOW(), NOW() + INTERVAL '1 minute', 'ACTIVE')
             RETURNING session_id
         """, (course_code, faculty_id))
 
